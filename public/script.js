@@ -1,37 +1,51 @@
-document.getElementById("sendButton").addEventListener("click", sendMessage);
+document.addEventListener("DOMContentLoaded", () => {
+    const chatMessages = document.getElementById("chatMessages");
+    const messageInput = document.getElementById("messageInput");
+    const sendMessageBtn = document.getElementById("sendMessage");
+    const imageUpload = document.getElementById("imageUpload");
 
-async function sendMessage() {
-    const inputField = document.getElementById("userInput");
-    const chatBox = document.getElementById("chat-box");
-    const fileInput = document.getElementById("imageInput");
-    let userMessage = inputField.value.trim();
-    
-    if (!userMessage && !fileInput.files.length) return;
-
-    // Affichage du message utilisateur
-    chatBox.innerHTML += `<div class="user-message"><img src="user1.jpg"> ${userMessage}</div>`;
-    inputField.value = "";
-
-    if (fileInput.files.length) {
-        let formData = new FormData();
-        formData.append("image", fileInput.files[0]);
-
-        chatBox.innerHTML += `<div class="bot-message">⏳ Uploading image...</div>`;
-        const uploadResponse = await fetch("/upload", { method: "POST", body: formData });
-        const uploadData = await uploadResponse.json();
-
-        if (uploadData.imageUrl) {
-            userMessage = prompt("Entrez une question sur l'image :");
-            chatBox.innerHTML += `<img src="${uploadData.imageUrl}" class="sent-image">`;
+    function addMessage(text, sender, image = null) {
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("chat-message", sender);
+        msgDiv.textContent = text;
+        if (image) {
+            const img = document.createElement("img");
+            img.src = image;
+            img.style.maxWidth = "100px";
+            msgDiv.appendChild(img);
         }
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    const response = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userMessage })
+    sendMessageBtn.addEventListener("click", async () => {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, "user");
+        messageInput.value = "";
+
+        const response = await fetch("/api/message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+        });
+        const data = await response.json();
+        addMessage(data.reply, "bot");
     });
 
-    const data = await response.json();
-    chatBox.innerHTML += `<div class="bot-message"><img src="robot1.jpg"> ${data.reply}</div>`;
-}
+    imageUpload.addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        addMessage("Téléchargement en cours...", "bot");
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
+        const { imageUrl } = await uploadResponse.json();
+
+        addMessage("Image envoyée. Tapez votre question :", "bot", imageUrl);
+    });
+});
