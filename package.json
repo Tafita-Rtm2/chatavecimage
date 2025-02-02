@@ -1,18 +1,16 @@
 {
-  "name": "chatbot_project",
+  "name": "chatbot-nodejs",
   "version": "1.0.0",
-  "description": "Chatbot en Node.js avec API et ImgBB",
+  "description": "Chatbot en Node.js avec API",
   "main": "server.js",
   "dependencies": {
-    "express": "^4.18.2",
-    "body-parser": "^1.20.2",
+    "axios": "^1.5.0",
     "cors": "^2.8.5",
-    "multer": "^*",
-    "axios": "^1.3.5"
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "form-data": "^4.0.0"
   },
   "scripts": {
     "start": "node server.js"
-  },
-  "author": "Toi",
-  "license": "MIT"
+  }
 }
