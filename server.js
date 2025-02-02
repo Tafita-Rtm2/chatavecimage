@@ -1,55 +1,63 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
-const multer = require("multer");
 const axios = require("axios");
+const multer = require("multer");
+const fs = require("fs");
 
 const app = express();
-const PORT = 8080;
+const port = 3000;
 
 app.use(cors());
-app.use(bodyParser.json());
 app.use(express.static("public"));
+app.use(express.json());
 
-// Configuration de multer pour l'upload des images
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ dest: "uploads/" });
 
-// Route pour traiter une question en texte
-app.post("/ask", async (req, res) => {
-  const { prompt } = req.body;
-  const apiUrl = `https://zaikyoo.onrender.com/api/4ov2?prompt=${encodeURIComponent(prompt)}&uid=1&img=`;
-
+// API Texte uniquement
+app.post("/api/message", async (req, res) => {
+  const { message } = req.body;
   try {
-    const response = await axios.get(apiUrl);
+    const response = await axios.get(
+      `https://zaikyoo.onrender.com/api/4ov2?prompt=${encodeURIComponent(message)}&uid=1&img=`
+    );
     res.json({ reply: response.data.reply });
   } catch (error) {
-    res.status(500).json({ error: "Erreur lors de la récupération de la réponse" });
+    res.status(500).json({ error: "Erreur API" });
   }
 });
 
-// Route pour uploader une image sur ImgBB et l'envoyer à l'API
-app.post("/upload", upload.single("image"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "Aucune image reçue" });
-
+// API Texte + Image (upload image vers ImgBB)
+app.post("/api/upload", upload.single("image"), async (req, res) => {
   try {
-    // Conversion en base64 pour l'envoi à ImgBB
-    const imgData = req.file.buffer.toString("base64");
-    const imgBBApiUrl = "https://api.imgbb.com/1/upload";
-    const imgBBKey = "6fef3d0d57641305c16bd5c0b5e27426";
+    const file = fs.createReadStream(req.file.path);
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("key", "6fef3d0d57641305c16bd5c0b5e27426");
 
-    // Upload sur ImgBB
-    const uploadResponse = await axios.post(imgBBApiUrl, null, {
-      params: { key: imgBBKey, image: imgData },
+    const imgbbResponse = await axios.post("https://api.imgbb.com/1/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
     });
 
-    const imageUrl = uploadResponse.data.data.url;
-    res.json({ imageUrl });
+    fs.unlinkSync(req.file.path);
+    res.json({ imageUrl: imgbbResponse.data.data.url });
   } catch (error) {
-    res.status(500).json({ error: "Erreur lors de l'upload de l'image" });
+    res.status(500).json({ error: "Erreur de téléchargement" });
   }
 });
 
-// Lancer le serveur
-app.listen(PORT, () => {
-  console.log(`Serveur en cours d'exécution sur http://localhost:${PORT}`);
+// API Texte avec Image
+app.post("/api/message-image", async (req, res) => {
+  const { message, imageUrl } = req.body;
+  try {
+    const response = await axios.get(
+      `https://zaikyoo.onrender.com/api/4ov2?prompt=${encodeURIComponent(message)}&uid=1&img=${encodeURIComponent(imageUrl)}`
+    );
+    res.json({ reply: response.data.reply });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur API" });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Serveur démarré sur http://localhost:${port}`);
 });
