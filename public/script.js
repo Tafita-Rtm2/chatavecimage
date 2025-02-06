@@ -4,15 +4,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendMessageBtn = document.getElementById("sendMessage");
     const imageUpload = document.getElementById("imageUpload");
 
-    let uploadedImageUrl = null; // Stocke l'image uploadée temporairement
+    let uploadedImageUrl = null;
 
-    // Charger les messages sauvegardés au démarrage
     loadMessages();
 
     function addMessage(text, sender, image = null, save = true) {
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("chat-message", sender);
-        msgDiv.textContent = text;
+
+        if (text.startsWith("<pre>")) {
+            msgDiv.innerHTML = text;
+        } else {
+            msgDiv.textContent = text;
+        }
 
         if (image) {
             const img = document.createElement("img");
@@ -27,14 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (save) saveMessages(text, sender, image);
     }
 
-    // Sauvegarder les messages dans localStorage
     function saveMessages(text, sender, image) {
         let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
         messages.push({ text, sender, image });
         localStorage.setItem("chatMessages", JSON.stringify(messages));
     }
 
-    // Charger les messages depuis localStorage
     function loadMessages() {
         let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
         messages.forEach(msg => addMessage(msg.text, msg.sender, msg.image, false));
@@ -50,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let requestBody = { message };
         if (uploadedImageUrl) {
             requestBody.imageUrl = uploadedImageUrl;
-            uploadedImageUrl = null; // Reset après envoi
+            uploadedImageUrl = null;
         }
 
         const response = await fetch("/api/message", {
@@ -58,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody),
         });
+
         const data = await response.json();
         addMessage(data.reply, "bot");
     });
