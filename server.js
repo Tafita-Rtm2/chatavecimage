@@ -14,9 +14,8 @@ app.use(express.json());
 
 const upload = multer({ dest: "uploads/" });
 
-let imageUrl = null; // Stocke temporairement l'URL de l'image uploadée
+let imageUrl = null;
 
-// API Texte uniquement
 app.post("/api/message", async (req, res) => {
     const { message } = req.body;
 
@@ -24,17 +23,17 @@ app.post("/api/message", async (req, res) => {
         let apiUrl = `https://zaikyoo.onrender.com/api/4ov2?prompt=${encodeURIComponent(message)}&uid=1`;
         if (imageUrl) {
             apiUrl += `&img=${encodeURIComponent(imageUrl)}`;
-            imageUrl = null; // Reset après l'utilisation
+            imageUrl = null;
         }
 
         const response = await axios.get(apiUrl);
-        res.json({ reply: response.data.reply });
+        const formattedReply = `<pre><code>${response.data.reply}</code></pre>`;
+        res.json({ reply: formattedReply });
     } catch (error) {
         res.status(500).json({ error: "Erreur API" });
     }
 });
 
-// API Upload d'image (Transformation en lien via ImgBB)
 app.post("/api/upload", upload.single("image"), async (req, res) => {
     try {
         const file = fs.createReadStream(req.file.path);
@@ -46,8 +45,8 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
             headers: formData.getHeaders(),
         });
 
-        fs.unlinkSync(req.file.path); // Supprime l'image locale après upload
-        imageUrl = imgbbResponse.data.data.url; // Stocke temporairement l'URL
+        fs.unlinkSync(req.file.path);
+        imageUrl = imgbbResponse.data.data.url;
         res.json({ imageUrl });
     } catch (error) {
         res.status(500).json({ error: "Erreur de téléchargement d'image" });
