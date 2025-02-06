@@ -2,45 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatMessages = document.getElementById("chatMessages");
     const messageInput = document.getElementById("messageInput");
     const sendMessageBtn = document.getElementById("sendMessage");
-    const imageUpload = document.getElementById("imageUpload");
-
-    let uploadedImageUrl = null;
-
-    loadMessages();
-
-    function addMessage(text, sender, image = null, save = true) {
-        const msgDiv = document.createElement("div");
-        msgDiv.classList.add("chat-message", sender);
-
-        if (text.startsWith("<pre>")) {
-            msgDiv.innerHTML = text;
-        } else {
-            msgDiv.textContent = text;
-        }
-
-        if (image) {
-            const img = document.createElement("img");
-            img.src = image;
-            img.style.maxWidth = "100px";
-            msgDiv.appendChild(img);
-        }
-
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        if (save) saveMessages(text, sender, image);
-    }
-
-    function saveMessages(text, sender, image) {
-        let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-        messages.push({ text, sender, image });
-        localStorage.setItem("chatMessages", JSON.stringify(messages));
-    }
-
-    function loadMessages() {
-        let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-        messages.forEach(msg => addMessage(msg.text, msg.sender, msg.image, false));
-    }
 
     sendMessageBtn.addEventListener("click", async () => {
         const message = messageInput.value.trim();
@@ -49,35 +10,43 @@ document.addEventListener("DOMContentLoaded", () => {
         addMessage(message, "user");
         messageInput.value = "";
 
-        let requestBody = { message };
-        if (uploadedImageUrl) {
-            requestBody.imageUrl = uploadedImageUrl;
-            uploadedImageUrl = null;
+        // Simule une réponse du bot
+        const response = await simulateBotResponse(message);
+        handleBotResponse(response);
+    });
+
+    function addMessage(text, sender, isCode = false) {
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("chat-message", sender);
+
+        if (isCode) {
+            const pre = document.createElement("pre");
+            const code = document.createElement("code");
+            code.textContent = text;
+            pre.appendChild(code);
+            msgDiv.appendChild(pre);
+        } else {
+            msgDiv.textContent = text;
         }
 
-        const response = await fetch("/api/message", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
-        });
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-        const data = await response.json();
-        addMessage(data.reply, "bot");
-    });
+    function handleBotResponse(response) {
+        if (response.isCode) {
+            addMessage(response.text, "bot", true);
+        } else {
+            addMessage(response.text, "bot");
+        }
+    }
 
-    imageUpload.addEventListener("change", async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        addMessage("Téléchargement de l'image en cours...", "bot");
-
-        const formData = new FormData();
-        formData.append("image", file);
-
-        const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
-        const { imageUrl } = await uploadResponse.json();
-        uploadedImageUrl = imageUrl;
-
-        addMessage("Image envoyée. Tapez votre question :", "bot", imageUrl);
-    });
+    async function simulateBotResponse(userMessage) {
+        // Détection simplifiée si le message contient du "code"
+        if (userMessage.toLowerCase().includes("code")) {
+            return { text: "Voici un exemple de code :\nconsole.log('Hello, world!');", isCode: true };
+        } else {
+            return { text: "Merci pour votre message !", isCode: false };
+        }
+    }
 });
