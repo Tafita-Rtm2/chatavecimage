@@ -1,4 +1,3 @@
-/* Styles de base */
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -11,7 +10,7 @@ body {
 
 .chat-container {
     width: 350px;
-    height: 600px;
+    height: 600px; /* Ajout d'une hauteur fixe pour un meilleur contrôle */
     background: white;
     border-radius: 10px;
     overflow: hidden;
@@ -30,18 +29,28 @@ body {
     justify-content: center;
 }
 
+.chat-header img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
 .chat-messages {
     flex-grow: 1;
-    padding: 10px;
+    padding: 10px; /* Réduction du padding */
     overflow-y: auto;
+    max-height: 100%; /* Ajustement pour remplir l'espace */
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-message {
-    margin: 8px 0;
+    margin: 8px 0; /* Ajout de plus d'espace entre les messages */
     padding: 10px;
-    border-radius: 15px;
+    border-radius: 15px; /* Bordures arrondies pour un look moderne */
     max-width: 80%;
-    word-wrap: break-word;
+    word-wrap: break-word; /* Permet de gérer les longs textes */
 }
 
 .bot {
@@ -55,14 +64,31 @@ body {
     align-self: flex-end;
 }
 
-pre {
-    background: #f8f9fa;
+.chat-input {
+    display: flex;
+    align-items: center;
     padding: 10px;
-    border-radius: 8px;
-    overflow-x: auto;
+    background: #f8f9fa;
+    border-top: 1px solid #ddd; /* Ligne de séparation avec les messages */
 }
 
-code {
-    font-family: 'Courier New', Courier, monospace;
-    color: #d6336c;
+.chat-input input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px; /* Bord arrondi pour le champ de texte */
+    margin-right: 10px;
+}
+
+.chat-input button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px; /* Bord arrondi pour le bouton */
+    cursor: pointer;
+}
+.chat-message.bot.pending {
+    font-style: italic;
+    color: gray;
 }
