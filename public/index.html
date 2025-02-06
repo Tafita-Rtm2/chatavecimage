@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot GPT4o</title>
+    <title>Gpt4o - Chatbot</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🧠 GPT4o Chatbot</h1>
+            <img src="robot1.jpg" alt="Bot"> Gpt4o-pro🧠vision🖼
         </div>
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Tapez votre message ici...">
+            <label for="imageUpload">📷</label>
+            <input type="file" id="imageUpload" accept="image/*" hidden>
+            <input type="text" id="messageInput" placeholder="Tapez votre message...">
             <button id="sendMessage">Envoyer</button>
         </div>
     </div>
