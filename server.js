@@ -20,7 +20,7 @@ app.post("/api/message", async (req, res) => {
     const { message } = req.body;
 
     try {
-        let apiUrl = `https://zaikyoo.onrender.com/api/4ov2?prompt=${encodeURIComponent(message)}&uid=1`;
+        let apiUrl = `https://yt-video-production.up.railway.app/gpt4-omni?ask=${encodeURIComponent(message)}&userid=1`;
         if (imageUrl) {
             apiUrl += `&img=${encodeURIComponent(imageUrl)}`;
             imageUrl = null;
