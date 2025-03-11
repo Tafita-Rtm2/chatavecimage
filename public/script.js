@@ -56,20 +56,24 @@ document.addEventListener("DOMContentLoaded", () => {
         let requestBody = { message };
         if (uploadedImageUrl) {
             requestBody.imageUrl = uploadedImageUrl;
-            uploadedImageUrl = null;
+            uploadedImageUrl = null; // Reset après l'envoi
         }
 
-        const response = await fetch("/api/message", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
-        });
-        const data = await response.json();
+        try {
+            const response = await fetch("/api/message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody),
+            });
+            const data = await response.json();
 
-        if (data.isCode) {
-            addMessage(data.reply, "bot", null, true);
-        } else {
-            addMessage(data.reply, "bot");
+            if (data.reply) {
+                addMessage(data.reply, "bot");
+            } else {
+                addMessage("Erreur lors de la réponse du bot.", "bot");
+            }
+        } catch (error) {
+            addMessage("Erreur de connexion avec le serveur.", "bot");
         }
     });
 
@@ -82,10 +86,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const formData = new FormData();
         formData.append("image", file);
 
-        const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
-        const { imageUrl } = await uploadResponse.json();
-        uploadedImageUrl = imageUrl;
+        try {
+            const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
+            const { imageUrl } = await uploadResponse.json();
+            uploadedImageUrl = imageUrl;
 
-        addMessage("Image envoyée. Tapez votre question :", "bot", imageUrl);
+            addMessage("Image envoyée. Tapez votre question :", "bot", imageUrl);
+        } catch (error) {
+            addMessage("Erreur lors du téléchargement de l'image.", "bot");
+        }
     });
 });
