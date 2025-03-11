@@ -16,18 +16,16 @@ const upload = multer({ dest: "uploads/" });
 
 let imageUrl = null; // Stocke temporairement l'URL de l'image uploadée
 
-// API Texte uniquement
+// API Texte ou Texte + Image
 app.post("/api/message", async (req, res) => {
-    const { message } = req.body;
+    const { message, imageUrl: image } = req.body;
 
     try {
         const apiUrl = `https://kaiz-apis.gleeze.com/api/gemini-vision?q=${encodeURIComponent(message)}&uid=1` + 
-                       (imageUrl ? `&imageUrl=${encodeURIComponent(imageUrl)}` : "");
+                       (image ? `&imageUrl=${encodeURIComponent(image)}` : "");
 
         const response = await axios.get(apiUrl);
-        imageUrl = null; // Reset après l'utilisation
-
-        res.json({ reply: response.data.response }); // Modification ici pour récupérer la bonne clé
+        res.json({ reply: response.data.response });
     } catch (error) {
         res.status(500).json({ error: "Erreur API" });
     }
@@ -46,8 +44,8 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         });
 
         fs.unlinkSync(req.file.path); // Supprime l'image locale après upload
-        imageUrl = imgbbResponse.data.data.url; // Stocke temporairement l'URL
-        res.json({ imageUrl });
+        const uploadedImageUrl = imgbbResponse.data.data.url;
+        res.json({ imageUrl: uploadedImageUrl });
     } catch (error) {
         res.status(500).json({ error: "Erreur de téléchargement d'image" });
     }
