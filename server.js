@@ -16,25 +16,18 @@ const upload = multer({ dest: "uploads/" });
 
 let imageUrl = null; // Stocke temporairement l'URL de l'image uploadée
 
-// API Texte uniquement (utilisant la nouvelle API)
+// API Texte uniquement
 app.post("/api/message", async (req, res) => {
     const { message } = req.body;
 
     try {
-        // Construction de l'URL pour la nouvelle API
-        let apiUrl = `https://yt-video-production.up.railway.app/gpt4-omni?ask=${encodeURIComponent(message)}&userid=1`;
-
-        // Si imageUrl est défini, on peut éventuellement l'utiliser,
-        // mais ici l'API gpt4-omni ne semble pas le supporter.
-        if (imageUrl) {
-            // Vous pourriez ajouter un paramètre image si l'API le supporte
-            // ex: apiUrl += `&img=${encodeURIComponent(imageUrl)}`;
-            imageUrl = null; // Réinitialisation après utilisation
-        }
+        const apiUrl = `https://kaiz-apis.gleeze.com/api/gemini-vision?q=${encodeURIComponent(message)}&uid=1` + 
+                       (imageUrl ? `&imageUrl=${encodeURIComponent(imageUrl)}` : "");
 
         const response = await axios.get(apiUrl);
-        // L'API retourne { status, response, author }
-        res.json({ reply: response.data.response, author: response.data.author });
+        imageUrl = null; // Reset après l'utilisation
+
+        res.json({ reply: response.data.response }); // Modification ici pour récupérer la bonne clé
     } catch (error) {
         res.status(500).json({ error: "Erreur API" });
     }
