@@ -5,8 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const imageUpload = document.getElementById("imageUpload");
 
     let uploadedImageUrl = null;
-
-    loadMessages();
+    let waitingForQuestion = false;
 
     function addMessage(text, sender, image = null) {
         const msgDiv = document.createElement("div");
@@ -16,24 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (image) {
             const img = document.createElement("img");
             img.src = image;
-            img.style.maxWidth = "100px";
             msgDiv.appendChild(img);
         }
 
         chatMessages.appendChild(msgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        saveMessages(text, sender, image);
-    }
-
-    function saveMessages(text, sender, image) {
-        let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-        messages.push({ text, sender, image });
-        localStorage.setItem("chatMessages", JSON.stringify(messages));
-    }
-
-    function loadMessages() {
-        let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-        messages.forEach(msg => addMessage(msg.text, msg.sender, msg.image));
     }
 
     sendMessageBtn.addEventListener("click", async () => {
@@ -43,27 +29,28 @@ document.addEventListener("DOMContentLoaded", () => {
         addMessage(message, "user");
         messageInput.value = "";
 
-        let requestBody = { message };
-        if (uploadedImageUrl) {
-            requestBody.imageUrl = uploadedImageUrl;
-            uploadedImageUrl = null; // Reset après l'envoi
-        }
+        if (waitingForQuestion && uploadedImageUrl) {
+            // L'utilisateur répond à la question sur l'image
+            waitingForQuestion = false;
+            const requestBody = { message, imageUrl: uploadedImageUrl };
+            uploadedImageUrl = null;
 
-        try {
             const response = await fetch("/api/message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestBody),
             });
             const data = await response.json();
-
-            if (data.reply) {
-                addMessage(data.reply, "bot");
-            } else {
-                addMessage("Aucune réponse reçue.", "bot");
-            }
-        } catch (error) {
-            addMessage("Erreur de connexion avec le serveur.", "bot");
+            addMessage(data.reply || "Aucune réponse reçue.", "bot");
+        } else {
+            // Envoi de texte uniquement
+            const response = await fetch("/api/message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message }),
+            });
+            const data = await response.json();
+            addMessage(data.reply || "Aucune réponse reçue.", "bot");
         }
     });
 
@@ -76,14 +63,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const formData = new FormData();
         formData.append("image", file);
 
-        try {
-            const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
-            const { imageUrl } = await uploadResponse.json();
-            uploadedImageUrl = imageUrl;
+        const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
+        const { imageUrl } = await uploadResponse.json();
+        uploadedImageUrl = imageUrl;
 
-            addMessage("Image envoyée. Tapez votre question :", "bot", imageUrl);
-        } catch (error) {
-            addMessage("Erreur lors du téléchargement de l'image.", "bot");
-        }
+        addMessage("Image envoyée ! Posez votre question sur l'image :", "bot", imageUrl);
+        waitingForQuestion = true;
     });
 });
