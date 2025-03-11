@@ -6,22 +6,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let uploadedImageUrl = null;
 
-    // Charger les messages sauvegardés au démarrage
     loadMessages();
 
-    function addMessage(text, sender, image = null, isCode = false) {
+    function addMessage(text, sender, image = null) {
         const msgDiv = document.createElement("div");
         msgDiv.classList.add("chat-message", sender);
-
-        if (isCode) {
-            const pre = document.createElement("pre");
-            const codeBlock = document.createElement("code");
-            codeBlock.textContent = text;
-            pre.appendChild(codeBlock);
-            msgDiv.appendChild(pre);
-        } else {
-            msgDiv.textContent = text;
-        }
+        msgDiv.textContent = text;
 
         if (image) {
             const img = document.createElement("img");
@@ -32,18 +22,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         chatMessages.appendChild(msgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        saveMessages(text, sender, image, isCode);
+        saveMessages(text, sender, image);
     }
 
-    function saveMessages(text, sender, image, isCode) {
+    function saveMessages(text, sender, image) {
         let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-        messages.push({ text, sender, image, isCode });
+        messages.push({ text, sender, image });
         localStorage.setItem("chatMessages", JSON.stringify(messages));
     }
 
     function loadMessages() {
         let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
-        messages.forEach(msg => addMessage(msg.text, msg.sender, msg.image, msg.isCode));
+        messages.forEach(msg => addMessage(msg.text, msg.sender, msg.image));
     }
 
     sendMessageBtn.addEventListener("click", async () => {
@@ -70,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.reply) {
                 addMessage(data.reply, "bot");
             } else {
-                addMessage("Erreur lors de la réponse du bot.", "bot");
+                addMessage("Aucune réponse reçue.", "bot");
             }
         } catch (error) {
             addMessage("Erreur de connexion avec le serveur.", "bot");
