@@ -14,7 +14,7 @@ app.use(express.json());
 
 const upload = multer({ dest: "uploads/" });
 
-// API Texte ou Texte + Image
+// API Texte uniquement ou Texte + Image
 app.post("/api/message", async (req, res) => {
     const { message, imageUrl } = req.body;
 
@@ -23,16 +23,15 @@ app.post("/api/message", async (req, res) => {
     }
 
     try {
-        // Construction de l'URL de l'API Kaizenji
         let apiUrl = `https://kaiz-apis.gleeze.com/api/gemini-vision?q=${encodeURIComponent(message)}&uid=1`;
         if (imageUrl) {
             apiUrl += `&imageUrl=${encodeURIComponent(imageUrl)}`;
         }
 
-        console.log("Requête envoyée à l'API :", apiUrl); // Debugging
+        console.log("Requête envoyée à l'API :", apiUrl); // Debug
 
         const response = await axios.get(apiUrl);
-        console.log("Réponse API :", response.data); // Debugging
+        console.log("Réponse API :", response.data); // Debug
 
         res.json({ reply: response.data.response });
     } catch (error) {
@@ -44,14 +43,14 @@ app.post("/api/message", async (req, res) => {
 // API Upload d'image (Transformation en lien via ImgBB)
 app.post("/api/upload", upload.single("image"), async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ error: "Aucun fichier reçu." });
+        return res.status(400).json({ error: "Aucune image reçue." });
     }
 
     try {
         const file = fs.createReadStream(req.file.path);
         const formData = new FormData();
         formData.append("image", file);
-        formData.append("key", "6fef3d0d57641305c16bd5c0b5e27426");
+        formData.append("key", "6fef3d0d57641305c16bd5c0b5e27426"); // Clé API ImgBB
 
         const imgbbResponse = await axios.post("https://api.imgbb.com/1/upload", formData, {
             headers: formData.getHeaders(),
@@ -60,7 +59,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         fs.unlinkSync(req.file.path); // Supprime l'image locale après upload
         const uploadedImageUrl = imgbbResponse.data.data.url;
 
-        console.log("Image uploadée :", uploadedImageUrl); // Debugging
+        console.log("Image uploadée :", uploadedImageUrl); // Debug
 
         res.json({ imageUrl: uploadedImageUrl });
     } catch (error) {
