@@ -40,7 +40,7 @@ app.post("/api/message", async (req, res) => {
     }
 });
 
-// API Upload d'image (Transformation en lien via ImgBB)
+// API Upload d'image (Transformation en lien via ImgBB avec nouvelle clé API)
 app.post("/api/upload", upload.single("image"), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: "Aucune image reçue." });
@@ -50,7 +50,7 @@ app.post("/api/upload", upload.single("image"), async (req, res) => {
         const file = fs.createReadStream(req.file.path);
         const formData = new FormData();
         formData.append("image", file);
-        formData.append("key", "6fef3d0d57641305c16bd5c0b5e27426"); // Clé API ImgBB
+        formData.append("key", "ffe88394d062119de16776181902619e"); // Nouvelle clé API ImgBB
 
         const imgbbResponse = await axios.post("https://api.imgbb.com/1/upload", formData, {
             headers: formData.getHeaders(),
