@@ -1,72 +1,52 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const chatMessages = document.getElementById("chatMessages");
-    const messageInput = document.getElementById("messageInput");
-    const sendMessageBtn = document.getElementById("sendMessage");
-    const imageUpload = document.getElementById("imageUpload");
+document.getElementById("voice-btn").addEventListener("click", () => {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "fr-FR";
 
-    let uploadedImageUrl = null;
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById("user-input").value = text;
+        sendMessage();
+    };
 
-    function addMessage(text, sender, image = null, isCode = false) {
-        const msgDiv = document.createElement("div");
-        msgDiv.classList.add("chat-message", sender);
+    recognition.start();
+});
 
-        if (isCode) {
-            const pre = document.createElement("pre");
-            const codeBlock = document.createElement("code");
-            codeBlock.textContent = text;
-            pre.appendChild(codeBlock);
-            msgDiv.appendChild(pre);
-        } else {
-            msgDiv.textContent = text;
-        }
+async function sendMessage() {
+    const inputField = document.getElementById("user-input");
+    const message = inputField.value.trim();
+    if (!message) return;
 
-        if (image) {
-            const img = document.createElement("img");
-            img.src = image;
-            img.style.maxWidth = "100px";
-            msgDiv.appendChild(img);
-        }
+    // Afficher le message de l'utilisateur
+    appendMessage("Vous", message);
 
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+    inputField.value = "";
 
-    sendMessageBtn.addEventListener("click", async () => {
-        const message = messageInput.value.trim();
-        if (!message) return;
-
-        addMessage(message, "user");
-        messageInput.value = "";
-
-        let requestBody = { message };
-        if (uploadedImageUrl) {
-            requestBody.imageUrl = uploadedImageUrl;
-            uploadedImageUrl = null;
-        }
-
-        const response = await fetch("/api/message", {
+    try {
+        const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
+            body: JSON.stringify({ text: message }),
         });
+
         const data = await response.json();
+        appendMessage("Bot", data.text, data.audio);
+    } catch (error) {
+        console.error("Erreur lors de l'envoi du message:", error);
+    }
+}
 
-        addMessage(data.reply, "bot");
-    });
+function appendMessage(sender, text, audio = null) {
+    const chatBox = document.getElementById("chat-box");
+    const messageDiv = document.createElement("div");
+    messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    chatBox.appendChild(messageDiv);
 
-    imageUpload.addEventListener("change", async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+    if (audio) {
+        const audioElement = document.createElement("audio");
+        audioElement.src = audio;
+        audioElement.controls = true;
+        chatBox.appendChild(audioElement);
+    }
 
-        addMessage("📤 Téléchargement de l'image en cours...", "bot");
-
-        const formData = new FormData();
-        formData.append("image", file);
-
-        const uploadResponse = await fetch("/api/upload", { method: "POST", body: formData });
-        const { imageUrl, message } = await uploadResponse.json();
-        uploadedImageUrl = imageUrl;
-
-        addMessage(message, "bot", imageUrl);
-    });
-});
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
