@@ -1,6 +1,11 @@
-document.getElementById("voice-btn").addEventListener("click", () => {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+const voiceBtn = document.getElementById("voice-btn");
+let recognition;
+
+voiceBtn.addEventListener("mousedown", () => {
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "fr-FR";
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
     // Afficher l'animation d'enregistrement
     const recordingIndicator = document.createElement("div");
@@ -14,20 +19,26 @@ document.getElementById("voice-btn").addEventListener("click", () => {
     };
 
     recognition.onend = () => {
-        // Supprimer l'animation après l'enregistrement
-        recordingIndicator.remove();
+        recordingIndicator.remove(); // Supprimer l'animation quand l'enregistrement s'arrête
     };
 
     recognition.start();
 });
 
+// Quand l'utilisateur relâche le bouton, on arrête l'enregistrement
+voiceBtn.addEventListener("mouseup", () => {
+    if (recognition) {
+        recognition.stop();
+    }
+});
+
+// Fonction pour envoyer un message (texte ou vocal converti en texte)
 async function sendMessage(text = null, isVoice = false) {
     const inputField = document.getElementById("user-input");
     const message = text || inputField.value.trim();
     if (!message) return;
 
-    const audioFileName = isVoice ? `/audio_user_${Date.now()}.mp3` : null;
-    appendMessage("Vous", message, "user-message", audioFileName, isVoice);
+    appendMessage("Vous", isVoice ? "🔊 Message vocal" : message, "user-message", null, isVoice);
 
     inputField.value = "";
 
@@ -45,6 +56,7 @@ async function sendMessage(text = null, isVoice = false) {
     }
 }
 
+// Fonction pour afficher un message dans le chat
 function appendMessage(sender, text, className, audio = null, isVoice = false) {
     const chatBox = document.getElementById("chat-box");
     const messageDiv = document.createElement("div");
