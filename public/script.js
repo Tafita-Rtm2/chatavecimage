@@ -1,76 +1,48 @@
-const voiceBtn = document.getElementById("voice-btn");
-let recognition;
-let recordingIndicator;
-
-voiceBtn.addEventListener("mousedown", startRecording);
-voiceBtn.addEventListener("touchstart", startRecording);
-
-voiceBtn.addEventListener("mouseup", stopRecording);
-voiceBtn.addEventListener("touchend", stopRecording);
-
-function startRecording() {
-    if (recognition) return; // Évite plusieurs déclenchements
-
-    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+document.getElementById("voice-btn").addEventListener("click", () => {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "fr-FR";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    // Afficher l'indicateur d'enregistrement
-    recordingIndicator = document.createElement("div");
-    recordingIndicator.className = "recording-indicator";
-    recordingIndicator.innerHTML = "🎤 Enregistrement...";
-    document.getElementById("chat-box").appendChild(recordingIndicator);
 
     recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
         sendMessage(text, true);
     };
 
-    recognition.onend = () => {
-        stopRecording();
-    };
-
     recognition.start();
-}
+});
 
-function stopRecording() {
-    if (recognition) {
-        recognition.stop();
-        recognition = null;
-    }
-    if (recordingIndicator) {
-        recordingIndicator.remove();
-        recordingIndicator = null;
-    }
-}
+async function sendMessage(text = null, isVoice = false) {
+    const inputField = document.getElementById("user-input");
+    const message = text || inputField.value.trim();
+    if (!message) return;
 
-// Fonction pour envoyer un message (texte ou vocal converti)
-async function sendMessage(text, isVoice = false) {
-    if (!text) return;
+    appendMessage("Vous", message, isVoice ? "audio-message" : "user-message", isVoice ? "user_voice.mp3" : null);
 
-    appendMessage("Vous", isVoice ? "🔊 Message vocal" : text, "user-message", null, isVoice);
+    inputField.value = "";
 
     try {
         const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text: message }),
         });
 
         const data = await response.json();
         appendMessage("Bot", data.text, "bot-message", data.audio);
     } catch (error) {
-        console.error("Erreur d'envoi:", error);
+        console.error("Erreur lors de l'envoi du message:", error);
     }
 }
 
-// Fonction pour afficher un message
-function appendMessage(sender, text, className, audio = null, isVoice = false) {
+function appendMessage(sender, text, className, audio = null) {
     const chatBox = document.getElementById("chat-box");
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${className}`;
-    messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+
+    if (className === "audio-message") {
+        messageDiv.innerHTML = `<strong>${sender}:</strong> 🔊 Message vocal`;
+    } else {
+        messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    }
 
     chatBox.appendChild(messageDiv);
 
