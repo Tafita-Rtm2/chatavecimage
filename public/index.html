@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat IA</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Chat Bot</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="chat-container">
-        <div id="chatMessages"></div>
-        <input type="file" id="imageUpload" accept="image/*">
-        <input type="text" id="messageInput" placeholder="Écrivez un message...">
-        <button id="sendMessage">Envoyer</button>
+        <div id="chat-box"></div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Tapez un message...">
+            <button onclick="sendMessage()">Envoyer</button>
+            <button id="voice-btn">🎤</button>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
