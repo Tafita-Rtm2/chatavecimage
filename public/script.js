@@ -4,20 +4,18 @@ document.getElementById("voice-btn").addEventListener("click", () => {
 
     recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
-        document.getElementById("user-input").value = text;
-        sendMessage();
+        sendMessage(text, true);
     };
 
     recognition.start();
 });
 
-async function sendMessage() {
+async function sendMessage(text = null, isVoice = false) {
     const inputField = document.getElementById("user-input");
-    const message = inputField.value.trim();
+    const message = text || inputField.value.trim();
     if (!message) return;
 
-    // Afficher le message de l'utilisateur
-    appendMessage("Vous", message);
+    appendMessage("Vous", message, isVoice ? "audio-message" : "user-message");
 
     inputField.value = "";
 
@@ -29,23 +27,48 @@ async function sendMessage() {
         });
 
         const data = await response.json();
-        appendMessage("Bot", data.text, data.audio);
+        appendMessage("Bot", data.text, "bot-message", data.audio);
     } catch (error) {
         console.error("Erreur lors de l'envoi du message:", error);
     }
 }
 
-function appendMessage(sender, text, audio = null) {
+function appendMessage(sender, text, className, audio = null) {
     const chatBox = document.getElementById("chat-box");
     const messageDiv = document.createElement("div");
-    messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    messageDiv.className = `message ${className}`;
+
+    if (className === "audio-message") {
+        messageDiv.innerHTML = `<strong>${sender}:</strong> 🔊 Message vocal`;
+    } else {
+        messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    }
+
     chatBox.appendChild(messageDiv);
 
     if (audio) {
+        const audioContainer = document.createElement("div");
+        audioContainer.className = "audio-controls";
+
         const audioElement = document.createElement("audio");
         audioElement.src = audio;
         audioElement.controls = true;
-        chatBox.appendChild(audioElement);
+
+        const playPauseBtn = document.createElement("button");
+        playPauseBtn.innerText = "▶️";
+        playPauseBtn.onclick = () => {
+            if (audioElement.paused) {
+                audioElement.play();
+                playPauseBtn.innerText = "⏸️";
+            } else {
+                audioElement.pause();
+                playPauseBtn.innerText = "▶️";
+            }
+        };
+
+        audioContainer.appendChild(playPauseBtn);
+        audioContainer.appendChild(audioElement);
+        chatBox.appendChild(audioContainer);
     }
 
     chatBox.scrollTop = chatBox.scrollHeight;
