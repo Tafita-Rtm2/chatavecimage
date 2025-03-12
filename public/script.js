@@ -15,7 +15,7 @@ async function sendMessage(text = null, isVoice = false) {
     const message = text || inputField.value.trim();
     if (!message) return;
 
-    appendMessage("Vous", message, isVoice ? "audio-message" : "user-message");
+    appendMessage("Vous", message, isVoice ? "audio-message" : "user-message", isVoice ? "user_voice.mp3" : null);
 
     inputField.value = "";
 
