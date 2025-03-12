@@ -2,9 +2,20 @@ document.getElementById("voice-btn").addEventListener("click", () => {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.lang = "fr-FR";
 
+    // Afficher l'animation d'enregistrement
+    const recordingIndicator = document.createElement("div");
+    recordingIndicator.className = "recording-indicator";
+    recordingIndicator.innerHTML = "🎤 Enregistrement...";
+    document.getElementById("chat-box").appendChild(recordingIndicator);
+
     recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
         sendMessage(text, true);
+    };
+
+    recognition.onend = () => {
+        // Supprimer l'animation après l'enregistrement
+        recordingIndicator.remove();
     };
 
     recognition.start();
@@ -15,7 +26,8 @@ async function sendMessage(text = null, isVoice = false) {
     const message = text || inputField.value.trim();
     if (!message) return;
 
-    appendMessage("Vous", message, isVoice ? "audio-message" : "user-message", isVoice ? "user_voice.mp3" : null);
+    const audioFileName = isVoice ? `/audio_user_${Date.now()}.mp3` : null;
+    appendMessage("Vous", message, "user-message", audioFileName, isVoice);
 
     inputField.value = "";
 
@@ -33,12 +45,12 @@ async function sendMessage(text = null, isVoice = false) {
     }
 }
 
-function appendMessage(sender, text, className, audio = null) {
+function appendMessage(sender, text, className, audio = null, isVoice = false) {
     const chatBox = document.getElementById("chat-box");
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${className}`;
 
-    if (className === "audio-message") {
+    if (isVoice) {
         messageDiv.innerHTML = `<strong>${sender}:</strong> 🔊 Message vocal`;
     } else {
         messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
